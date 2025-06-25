@@ -1,0 +1,63 @@
+services:
+  ubuntu-dev:
+    image: ubuntu:22.04
+    container_name: ubuntu-dev-container
+    hostname: ubuntu-dev
+    
+    # Mantém o container rodando
+    tty: true
+    stdin_open: true
+    
+    # Pasta compartilhada + volumes para cache
+    volumes:
+      - ${HOME}:/shared
+    
+    # Diretório de trabalho
+    working_dir: /shared
+    
+    # OPÇÃO 1: Host network (mais simples - TODAS as portas)
+    network_mode: host
+    
+    
+    # Variáveis úteis
+    environment:
+      - TERM=xterm-256color
+      - DEBIAN_FRONTEND=noninteractive
+      - TZ=America/Sao_Paulo
+      - LANG=pt_BR.UTF-8
+      - LC_ALL=C.UTF-8
+      # Git config (opcional)
+      - GIT_AUTHOR_NAME=${USER}
+      - GIT_COMMITTER_NAME=${USER}
+   
+    # Setup inicial: usuário ubuntu + sudo + pacotes básicos + DOCKER
+    command: >
+      bash -c "
+        # Corrige hostname primeiro
+        echo '127.0.0.1 ubuntu-dev' >> /etc/hosts &&
+        
+        apt update &&
+        apt install -y sudo unzip curl wget git vim nano build-essential ca-certificates gnupg &&
+        
+        # Cria usuário ubuntu
+        adduser --disabled-password --gecos '' ubuntu &&
+        usermod -aG sudo ubuntu &&
+        echo 'ubuntu:ubuntu' | chpasswd &&
+        echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers &&
+        
+        # Instala Docker CLI (método simplificado)
+        curl -fsSL https://get.docker.com -o get-docker.sh && 
+        sudo sh ./get-docker.sh &&
+
+        # Adiciona usuário ubuntu ao grupo docker
+        usermod -aG docker ubuntu &&
+        
+        # Inicia como usuário ubuntu
+        exec su - ubuntu -c 'cd /shared && exec bash'
+      "
+   
+# Rede customizada
+networks:
+  default:
+    name: dev-network
+    driver: bridge
