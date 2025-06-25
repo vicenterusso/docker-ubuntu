@@ -11,14 +11,20 @@ services:
     # Pasta compartilhada + volumes para cache
     volumes:
       - ${HOME}:/shared
+      - ./home-dev:/home/ubuntu
     
     # Diretório de trabalho
     working_dir: /shared
+
+    # Roda como usuário ubuntu por padrão
+#    user: "1000:1000"  # UID/GID do usuário ubuntu
     
     # OPÇÃO 1: Host network (mais simples - TODAS as portas)
-    network_mode: host
-    
-    
+#    network_mode: host
+    ports:
+      - "8081:80"
+      - "9090:9000"
+
     # Variáveis úteis
     environment:
       - TERM=xterm-256color
